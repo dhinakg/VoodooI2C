@@ -1,0 +1,33 @@
+language: objective-c
+osx_image: xcode11.3
+install:
+- curl -L https://github.com/alexey-lysiuk/macos-sdk/releases/download/10.12/MacOSX10.12.tar.bz2 -o /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.tar.bz2 && tar -xjf /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.12.tar.bz2 -C /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/
+- pip install cpplint
+- pip install git+https://github.com/alexandred/cldoc.git
+script:
+- echo 'export PATH=~/Library/Python/2.7/bin:$PATH' >> ~/.bashrc
+- git submodule init && git submodule update
+- set -o pipefail && xcodebuild -workspace "VoodooI2C.xcworkspace" -scheme "VoodooI2C" -sdk macosx10.12 -derivedDataPath build clean build | xcpretty
+before_deploy:
+- export NEW_LINES=$'\n\n\n'
+- export VOODOOI2C_VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" "VoodooI2C.kext/Contents/info.plist")
+- export LAST_TEN_COMMITS="$(git log `git describe --tags $(git rev-list --tags --max-count=1)`..HEAD --oneline --format=" - %s" | head -10)"
+- export NUM_COMMITS="$(git rev-list `git describe --tags $(git rev-list --tags --max-count=1)`..HEAD --count)"
+- cd build/Build/Products/Release
+- mkdir Archives
+- zip -r Archives/"VoodooI2C-$VOODOOI2C_VERSION.zip" *.kext
+- zip -r Archives/"VoodooI2C-Debug-Symbols-$VOODOOI2C_VERSION.zip" *.dSYM
+- cd ../../../..
+deploy:
+  edge: true
+  provider: releases
+  cleanup: false
+  file_glob: true
+  token:
+    secure: bHqLdCPHCXK5DZEYbug4nFgK3a649sEjQYBfqU+W9tO2pKxVtjKUVpYV4xTI6fZx7iIEnv0t+K5uDytdCuIDCITKH2rMGzHWrse+CMLu3WXPqCCP6hCfzAjjiyQS00HHINOxt+DfJK+U6alSrjb00pjOVNDGMoz+0qunlOemK/yvg2+Itr5hJNaugJuMELWonwCLH9TPa2iD1SNy6hCrbjQHvZ/O0pBilas0CXWQ2AbvkBFpFSqn3zwpV8aUYDlVkdCUcbgJqNi0NOdIEAboH29y9InlUp9YB5AbK5teSOahxmiSX8wcQPazgQkRv6EjcsPTEFcal5cdySJuHku9G7W5IQlwfSSbPogEHojUwxXDPAEjwCv+lNPDfEFcT/741xlkqKyQdNx3BbdVB46Rl+3wA3kZQb5xEtTJCBio4Xp+q4qOfMwAHARIjhaaTo5DSv1otP16clMBxwYbknU7xjPNshguvXFZzz5/71JqqKByfOztto78YcNLCcfT9mtu22v21nKtqGiMmoAitgalvwtx7T2FwicQPTjZi/JCmLGG3Lgj8GglrjtQ/To6Duk6vfa5tXTP8QKi1IIaLXmjT4izZPI7UbW3lZMPwoBUE/v32x8vFJfT11qY35S6Z2/Y5UPtrsayhxpJ9nHFu2QZab4+i9iimxT2Lefip+sGhxk=
+  file: build/Build/Products/Release/Archives/*.zip
+  on:
+    tags: true
+  name: $VOODOOI2C_VERSION
+  release_number: $VOODOOI2C_VERSION
+  release_notes: "Since the last release there have been $NUM_COMMITS commit(s). The descriptions for the first (at most) 10 of these are as follows $NEW_LINES $LAST_TEN_COMMITS"
