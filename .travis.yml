@@ -5,7 +5,7 @@ install:
 - curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py
 - sudo python get-pip.py
 - sudo -H pip install cpplint
-- sudo -H pip install git+https://github.com/alexandred/cldoc.git
+- sudo -H pip install --ignore-installed git+https://github.com/alexandred/cldoc.git
 script:
 - echo 'export PATH=~/Library/Python/2.7/bin:$PATH' >> ~/.bashrc
 - git submodule init && git submodule update
