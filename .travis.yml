@@ -10,7 +10,7 @@ install:
 script:
 - echo 'export PATH=~/Library/Python/2.7/bin:$PATH' >> ~/.bashrc
 - git submodule init && git submodule update
-- set -o pipefail && xcodebuild -workspace "VoodooI2C.xcworkspace" -scheme "VoodooI2C" -sdk macosx10.12 -derivedDataPath build clean build | xcpretty
+- set -o pipefail && xcodebuild -workspace "VoodooI2C.xcworkspace" -scheme "VoodooI2C" -sdk macosx10.12 -derivedDataPath build clean build CODE_SIGN_IDENTITY="" CODE_SIGNING_REQUIRED=NO | xcpretty
 before_deploy:
 - export NEW_LINES=$'\n\n\n'
 - export LAST_TEN_COMMITS="$(git log `git describe --tags $(git rev-list --tags --max-count=1)`..HEAD --oneline --format=" - %s" | head -10)"
